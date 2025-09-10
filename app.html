@@ -1,3 +1,775 @@
 <html>
-  OpenAI API를 이용한 챗봇 만들기 연습
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>🎵 Mood Music – Demo (Fixed)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #111827;
+            --text: #e5e7eb;
+            --accent: #8b5cf6
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #0f172a, #111827);
+            color: var(--text);
+            font-family: Poppins, system-ui, sans-serif
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 40px auto;
+            padding: 0 20px
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px
+        }
+
+        .brand {
+            font-weight: 700;
+            font-size: 24px;
+            letter-spacing: .5px
+        }
+
+        .card {
+            background: rgba(17, 24, 39, .7);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 20px;
+            padding: 20px
+        }
+
+        .row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: center
+        }
+
+        .btn {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, .1);
+            background: var(--accent);
+            color: var(--text);
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .btn-link {
+            display: inline-block;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, .2);
+            padding: 8px 12px;
+            border-radius: 10px;
+            color: var(--text);
+            text-decoration: none
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #2a2f45;
+            border: 1px solid rgba(255, 255, 255, .08);
+            font-size: 12px;
+            margin-right: 6px
+        }
+
+        .mood-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .mood-btn {
+            padding: 10px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, .12);
+            background: #0b1020;
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 600
+        }
+
+        .mood-btn.active {
+            background: var(--accent);
+            border-color: transparent
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 18px
+        }
+
+        .media-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 18px
+        }
+
+        @media (max-width: 900px) {
+            .media-row {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .sp-embed {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .08);
+            background: #0b1020
+        }
+
+        .sp-embed iframe {
+            width: 100%;
+            height: 380px;
+            border: 0
+        }
+
+        .yt-wrap {
+            position: relative;
+            padding-top: 56.25%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .08);
+            background: #0b1020
+        }
+
+        .yt-wrap iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%
+        }
+
+        .yt-thumbs {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 12px
+        }
+
+        .yt-thumbs.two-col {
+            grid-template-columns: 1fr 1fr
+        }
+
+        .yt-col {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px
+        }
+
+        .yt-thumb {
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #0b1020
+        }
+
+        .yt-thumb img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover
+        }
+
+        .yt-thumb .cap {
+            padding: 8px;
+            font-size: 12px;
+            opacity: .85
+        }
+
+        .cal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px
+        }
+
+        .cal-cell {
+            aspect-ratio: 1/1.05;
+            min-height: 88px;
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 10px;
+            padding: 8px;
+            background: #0b1020;
+            position: relative
+        }
+
+        .cal-day {
+            opacity: .9;
+            font-size: 12px
+        }
+
+        .cal-has {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981
+        }
+
+        .cal-empty {
+            opacity: .25
+        }
+
+        .cal-snippet {
+            margin-top: 6px;
+            font-size: 11px;
+            opacity: .75;
+            line-height: 1.2;
+            max-height: 2.4em;
+            overflow: hidden
+        }
+
+        .memo {
+            margin-top: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .textarea {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, .12);
+            background: #0b1020;
+            color: var(--text)
+        }
+
+        .footer {
+            opacity: .7;
+            margin-top: 28px;
+            font-size: 13px;
+            text-align: center
+        }
+
+        @media (max-width: 640px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .mood-btn {
+                padding: 12px 14px
+            }
+
+            .card {
+                padding: 16px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand">🎵 Mood Music (Demo)</div>
+            <a class="btn-link" href="./README.md" target="_blank" rel="noreferrer">프로젝트 설명 열기</a>
+        </div>
+
+        <div class="card">
+            <div class="row">
+                <div class="mood-bar" id="mood-bar">
+                    <button class="mood-btn" data-mood="행복">😊 행복</button>
+                    <button class="mood-btn" data-mood="슬픔">😢 슬픔</button>
+                    <button class="mood-btn" data-mood="스트레스">😵 스트레스</button>
+                    <button class="mood-btn" data-mood="차분">😌 차분</button>
+                    <button class="mood-btn" data-mood="집중">🧠 집중</button>
+                    <button class="mood-btn" data-mood="신남">🤩 신남</button>
+                    <button class="mood-btn" data-mood="로맨틱">💖 로맨틱</button>
+                    <button class="mood-btn" data-mood="운동">💪 운동</button>
+                    <button class="mood-btn" data-mood="기분전환">🌈 기분전환</button>
+                    <button class="mood-btn" data-mood="칠힙">🧊 칠힙</button>
+                </div>
+                <span id="status" class="pill" style="display:none"></span>
+            </div>
+        </div>
+
+        <div id="media-row" class="media-row" style="display:none">
+            <div id="result" class="card" style="display:none">
+                <h3 style="margin-top:0">Spotify 플레이리스트</h3>
+                <div id="grid" class="grid"></div>
+            </div>
+            <div id="yt" class="card" style="display:none">
+                <h3 style="margin-top:0">YouTube 추천 영상</h3>
+                <div class="yt-wrap"><iframe id="yt-frame" src="" title="YouTube video" frameborder="0"
+                        allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowfullscreen></iframe></div>
+                <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+                    <a id="yt-link" class="btn-link" href="#" target="_blank" rel="noreferrer">YouTube에서 열기</a>
+                    <span class="pill">첫 영상은 무음 자동재생됩니다</span>
+                </div>
+                <div id="yt-thumbs" class="yt-thumbs"></div>
+            </div>
+        </div>
+
+        <div id="art" class="card" style="display:none">
+            <h3 style="margin-top:0">오늘의 예술 작품</h3>
+            <img id="art-img" src="" alt="art"
+                style="width:100%;border-radius:12px;border:1px solid rgba(255,255,255,.08)" />
+            <div id="art-cap" class="meta" style="margin-top:8px"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+                <a id="art-open" class="btn-link" href="#" target="_blank" rel="noreferrer">작품 페이지 열기</a>
+                <button id="art-embed-toggle" class="btn" style="background:#6b7280">임베드 보기</button>
+            </div>
+            <div id="art-sources" class="meta" style="margin-top:8px"></div>
+            <div id="art-embed-wrap"
+                style="display:none;margin-top:10px;border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;background:#0b1020">
+                <iframe id="art-embed" src="" style="width:100%;height:420px;border:0" title="art page"></iframe>
+            </div>
+            <div id="art-embed-note" class="meta" style="display:none;margin-top:6px">일부 미술관 사이트는 보안
+                정책(X-Frame-Options)으로 임베드가 차단됩니다. 이 경우 위 링크로 새 탭에서 열어주세요.</div>
+        </div>
+
+        <div id="diary" class="card diary">
+            <h3 style="margin-top:0">나의 기분 일기 (달력)</h3>
+            <div class="cal-header">
+                <button id="prev-week" class="btn" style="padding:8px 10px">◀</button>
+                <div id="cal-title" class="brand" style="font-size:18px">이번 주</div>
+                <button id="next-week" class="btn" style="padding:8px 10px">▶</button>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+            <div class="memo">
+                <div style="display:flex;gap:10px;align-items:center"><span class="pill" id="memo-date">날짜를
+                        선택하세요</span><span class="pill" id="memo-mood" style="display:none"></span></div>
+                <textarea id="memo-text" class="textarea" rows="3" placeholder="간단한 메모를 적어 보세요"></textarea>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button id="memo-save" class="btn">메모 저장</button>
+                    <button id="memo-clear" class="btn" style="background:#ef4444">삭제</button>
+                    <button id="export-json" class="btn" style="background:#0ea5e9">JSON 내보내기</button>
+                    <button id="export-csv" class="btn" style="background:#22c55e">CSV 내보내기</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="code" class="card" style="display:none">
+            <h3 style="margin-top:0">코드 스니펫</h3>
+            <textarea id="code-text" class="textarea" rows="5" placeholder="날짜를 선택하면 코드가 채워집니다"></textarea>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+                <button id="code-run" class="btn">실행</button>
+                <button id="code-clear" class="btn" style="background:#6b7280">지우기</button>
+            </div>
+            <pre id="code-out" class="textarea" style="white-space:pre-wrap;margin-top:10px"></pre>
+        </div>
+    </div>
+
+    <div class="footer"> 2025 Mood Music Demo</div>
+    </div>
+
+    <script>
+        const $ = (s) => document.querySelector(s);
+        let selectedMood = '행복';
+        const moodBarEl = $('#mood-bar');
+        const statusEl = $('#status');
+        const resultEl = $('#result');
+        const gridEl = $('#grid');
+        const mediaRow = $('#media-row');
+        const ytCard = $('#yt');
+        const ytFrame = $('#yt-frame');
+        const ytLink = $('#yt-link');
+        const ytThumbs = $('#yt-thumbs');
+        const artCard = $('#art');
+        const artImg = $('#art-img');
+        const artCap = $('#art-cap');
+        const artOpen = $('#art-open');
+        const artEmbedToggle = $('#art-embed-toggle');
+        const artSources = $('#art-sources');
+        const artEmbedWrap = $('#art-embed-wrap');
+        const artEmbed = $('#art-embed');
+        const artEmbedNote = $('#art-embed-note');
+        let currentArtPages = [];
+
+        const SPOTIFY_PLAYLIST_BY_MOOD = {
+            '행복': '37i9dQZF1DXdPec7aLTmlC',
+            '슬픔': '37i9dQZF1DX7qK8ma5wgG1',
+            '스트레스': '37i9dQZF1DX3Ogo9pFvBkY',
+            '차분': '37i9dQZF1DX4sWSpwq3LiO',
+            '집중': '37i9dQZF1DX8Uebhn9wzrS',
+            '신남': '37i9dQZF1DX1H4LbvY4OJI',
+            '로맨틱': '37i9dQZF1DWXJfnUiYjUKT',
+            '운동': '37i9dQZF1DX76Wlfdnj7AP',
+            '기분전환': '37i9dQZF1DX3rxVfibe1L0',
+            '칠힙': '37i9dQZF1DX4WYpdgoIcn6'
+        };
+
+        const ART_BY_MOOD = {
+            '행복': {
+                title: '고흐 – 해바라기', desc: '따뜻한 노란색과 활력 넘치는 붓질은 긍정과 활기를 전합니다. 밝은 톤이 행복한 기분을 더욱 증폭시켜 줍니다.',
+                srcs: [
+                    'https://images.metmuseum.org/CRDImages/ep/original/DP229743.jpg',
+                    'https://artvee.com/wp-content/uploads/2020/09/the-sunflowers-1888-1.jpg',
+                    'https://upload.wikimedia.org/wikipedia/commons/6/6a/Vincent_van_Gogh_-_Sunflowers_-_VGM_F458.jpg'
+                ],
+                pages: [
+                    'https://www.metmuseum.org/art/collection',
+                    'https://artsandculture.google.com/?hl=ko',
+                    'https://commons.wikimedia.org/wiki/Main_Page?uselang=ko'
+                ]
+            },
+            '슬픔': {
+                title: '뭉크 – 절규', desc: '뒤틀린 하늘과 인물의 표정이 감정의 번짐을 시각화합니다. 슬픔과 불안을 정면으로 마주하게 합니다.',
+                srcs: [
+                    'https://upload.wikimedia.org/wikipedia/commons/f/f4/The_Scream.jpg',
+                    'https://artvee.com/wp-content/uploads/2020/09/the-scream-1893-1.jpg'
+                ],
+                pages: [
+                    'https://commons.wikimedia.org/wiki/Main_Page?uselang=ko',
+                    'https://artsandculture.google.com/?hl=ko'
+                ]
+            },
+            '스트레스': {
+                title: '호쿠사이 – 가나가와의 큰 파도', desc: '거대한 물결은 압도와 긴장을 상징합니다. 그러나 뒤편 후지산은 흔들리지 않는 중심을 암시합니다.',
+                srcs: [
+                    'https://upload.wikimedia.org/wikipedia/commons/0/0a/Great_Wave_off_Kanagawa2.jpg',
+                    'https://artvee.com/wp-content/uploads/2020/09/the-great-wave-off-kanagawa-1830-1.jpg'
+                ],
+                pages: [
+                    'https://commons.wikimedia.org/wiki/Main_Page?uselang=ko',
+                    'https://www.metmuseum.org/art/collection'
+                ]
+            },
+            '차분': {
+                title: '모네 – 수련', desc: '부드러운 색면과 잔잔한 수면이 심호흡을 이끕니다. 시선이 머무는 동안 마음의 파장도 잦아듭니다.',
+                srcs: [
+                    'https://images.metmuseum.org/CRDImages/ep/original/DT1567.jpg',
+                    'https://artvee.com/wp-content/uploads/2020/09/water-lilies-1919-1.jpg',
+                    'https://upload.wikimedia.org/wikipedia/commons/0/09/Claude_Monet_-_Water_Lilies_-_Google_Art_Project.jpg'
+                ],
+                pages: [
+                    'https://www.metmuseum.org/art/collection',
+                    'https://artsandculture.google.com/?hl=ko',
+                    'https://commons.wikimedia.org/wiki/Main_Page?uselang=ko'
+                ]
+            },
+            '집중': {
+                title: '몬드리안 – 구성', desc: '명확한 격자와 색면의 질서가 인지적 초점을 돕습니다. 불필요한 요소를 덜어낸 절제가 집중을 강화합니다.',
+                srcs: [
+                    'https://upload.wikimedia.org/wikipedia/commons/5/5f/Piet_Mondrian%2C_1921_-_Composition_with_large_red_plane%2C_yellow%2C_black%2C_gray_and_blue.jpg'
+                ],
+                pages: [
+                    'https://commons.wikimedia.org/wiki/Main_Page?uselang=ko'
+                ]
+            },
+            '신남': {
+                title: '칸딘스키 – 구성 VII', desc: '선과 색의 폭발적 에너지가 흥분과 역동을 전달합니다. 즉흥적 리듬이 신나는 감정을 주파수처럼 울립니다.',
+                srcs: [
+                    'https://upload.wikimedia.org/wikipedia/commons/3/32/Wassily_Kandinsky%2C_1913_-_Composition_7.jpg',
+                    'https://artvee.com/wp-content/uploads/2020/09/composition-vii-1913-1.jpg'
+                ],
+                pages: [
+                    'https://commons.wikimedia.org/wiki/Main_Page?uselang=ko'
+                ]
+            },
+            '로맨틱': {
+                title: '클림트 – 키스', desc: '황금빛 장식성과 서로를 감싸는 구도가 친밀함을 강조합니다. 부드러운 곡선이 사랑의 온기를 시각화합니다.',
+                srcs: [
+                    'https://upload.wikimedia.org/wikipedia/commons/0/0c/Gustav_Klimt_016.jpg',
+                    'https://artvee.com/wp-content/uploads/2020/09/the-kiss-1907-1.jpg'
+                ],
+                pages: [
+                    'https://artsandculture.google.com/?hl=ko',
+                    'https://commons.wikimedia.org/wiki/Main_Page?uselang=ko'
+                ]
+            },
+            '운동': {
+                title: '보초니 – 자전거 탄 이의 역동', desc: '속도감 있는 선과 형태 분절이 운동 에너지를 포착합니다. 신체의 추진력이 화면 전체로 확장됩니다.',
+                srcs: [
+                    'https://upload.wikimedia.org/wikipedia/commons/8/8d/Umberto_Boccioni%2C_1913%2C_Dynamism_of_a_Cyclist.jpg',
+                    'https://artvee.com/wp-content/uploads/2020/09/dynamism-of-a-cyclist-1913-1.jpg'
+                ],
+                pages: [
+                    'https://commons.wikimedia.org/wiki/Main_Page?uselang=ko'
+                ]
+            },
+            '기분전환': {
+                title: '마티스 – 붉은 방의 조화', desc: '강렬한 색면 전환이 인지의 틀을 흔듭니다. 생동하는 패턴이 기분을 새롭게 환기합니다.',
+                srcs: [
+                    'https://upload.wikimedia.org/wikipedia/commons/3/34/Henri_Matisse%2C_1909%2C_Harmony_in_Red_%28The_Red_Room%29.jpg',
+                    'https://artvee.com/wp-content/uploads/2020/09/harmony-in-red-the-red-room-1903-1.jpg'
+                ],
+                pages: [
+                    'https://commons.wikimedia.org/wiki/Main_Page?uselang=ko',
+                    'https://www.artic.edu/collection'
+                ]
+            },
+            '칠힙': {
+                title: '휘슬러 – 야상곡', desc: '어둠 속 점묘적 불빛이 차갑고도 고요한 밤을 만듭니다. 느린 잔향이 차분한 쿨감을 남깁니다.',
+                srcs: [
+                    'https://upload.wikimedia.org/wikipedia/commons/6/62/James_McNeill_Whistler_-_Nocturne_in_Black_and_Gold%2C_The_Falling_Rocket.jpg',
+                    'https://artvee.com/wp-content/uploads/2020/09/nocturne-in-black-and-gold-the-falling-rocket-1874-1.jpg'
+                ],
+                pages: [
+                    'https://commons.wikimedia.org/wiki/Main_Page?uselang=ko'
+                ]
+            }
+        };
+
+        function loadArt(mood) {
+            const art = ART_BY_MOOD[mood];
+            if (!art) { artCard.style.display = 'none'; return; }
+            const srcs = art.srcs.slice();
+            function tryNext() {
+                if (!srcs.length) { artCard.style.display = 'none'; return; }
+                const src = srcs.shift();
+                artImg.onerror = () => { tryNext(); };
+                artImg.onload = () => { artCard.style.display = 'block'; };
+                artImg.src = src; artImg.alt = art.title; artCap.innerHTML = `<strong>${art.title}</strong><br>${art.desc}`;
+                // sources and open link
+                const pages = art.pages || [];
+                if (pages.length) {
+                    artOpen.href = pages[0];
+                    artSources.innerHTML = '출처: ' + pages.map((p, i) => `<a class="btn-link" href="${p}" target="_blank" rel="noreferrer">링크${i + 1}</a>`).join(' ');
+                } else {
+                    artOpen.href = '#';
+                    artSources.textContent = '';
+                }
+            }
+            tryNext();
+        }
+
+        function firstEmbeddableUrl(pages) {
+            const allowHosts = ['commons.wikimedia.org', 'www.artic.edu', 'pixabay.com'];
+            for (const p of (pages || [])) {
+                try { const u = new URL(p); if (allowHosts.includes(u.host)) return p; } catch (e) { }
+            }
+            return '';
+        }
+
+        artEmbedToggle.addEventListener('click', () => {
+            if (!currentArtPages.length) { artEmbedWrap.style.display = 'none'; artEmbedNote.style.display = 'block'; return; }
+            if (artEmbedWrap.style.display === 'none' || !artEmbedWrap.style.display) {
+                const u = firstEmbeddableUrl(currentArtPages);
+                if (u) { artEmbed.src = u; artEmbedWrap.style.display = 'block'; artEmbedNote.style.display = 'none'; }
+                else { artEmbedWrap.style.display = 'none'; artEmbedNote.style.display = 'block'; if (currentArtPages[0]) window.open(currentArtPages[0], '_blank'); }
+            } else {
+                artEmbedWrap.style.display = 'none';
+            }
+        });
+
+        const MOOD_META = {
+            '행복': { emoji: '😊', color: '#f59e0b' },
+            '슬픔': { emoji: '😢', color: '#60a5fa' },
+            '스트레스': { emoji: '😵', color: '#a78bfa' },
+            '차분': { emoji: '😌', color: '#34d399' },
+            '집중': { emoji: '🧠', color: '#f97316' },
+            '신남': { emoji: '🤩', color: '#ef4444' },
+            '로맨틱': { emoji: '💖', color: '#fb7185' },
+            '운동': { emoji: '💪', color: '#22c55e' },
+            '기분전환': { emoji: '🌈', color: '#38bdf8' },
+            '칠힙': { emoji: '🧊', color: '#93c5fd' }
+        };
+
+        const YT_BY_MOOD = {
+            '행복': [
+                { id: 'ZbZSe6N_BXs', title: 'Pharrell Williams - Happy' },
+                { id: 'pRpeEdMmmQ0', title: 'Shakira - Waka Waka' },
+                { id: 'OPf0YbXqDm0', title: 'Mark Ronson - Uptown Funk' }
+            ],
+            '슬픔': [
+                { id: 'hLQl3WQQoQ0', title: 'Adele - Someone Like You' },
+                { id: 'RgKAFK5djSk', title: 'Wiz Khalifa - See You Again' },
+                { id: 'pbMwTqkKSps', title: 'Sam Smith - Too Good At Goodbyes' }
+            ],
+            '스트레스': [
+                { id: '2OEL4P1Rz04', title: 'Calm Music - Stress Relief' },
+                { id: 'DWcJFNfaw9c', title: 'Lofi Hip Hop - relax' },
+                { id: '2X_2IdybTV0', title: 'Deep Focus Music' }
+            ],
+            '차분': [
+                { id: '1ZYbU82GVz4', title: 'Peaceful Piano' },
+                { id: '2OEL4P1Rz04', title: 'Relaxing Music' },
+                { id: '7NOSDKb0HlU', title: 'Ambient Chillout' }
+            ],
+            '집중': [
+                { id: 'WPni755-Krg', title: 'lofi hip hop radio' },
+                { id: 'lTRiuFIWV54', title: '4 Hours Focus' },
+                { id: '2X_2IdybTV0', title: 'Deep Focus' }
+            ],
+            '신남': [
+                { id: 'tVj0ZTS4WF4', title: 'Jennifer Lopez - On The Floor' },
+                { id: '9bZkp7q19f0', title: 'PSY - GANGNAM STYLE' },
+                { id: 'uelHwf8o7_U', title: 'Eminem - Love The Way You Lie' }
+            ],
+            '로맨틱': [
+                { id: '450p7goxZqg', title: 'Ed Sheeran - Thinking Out Loud' },
+                { id: 'JGwWNGJdvx8', title: 'Ed Sheeran - Shape of You' },
+                { id: 'nSDgHBxUbVQ', title: 'Ed Sheeran - Perfect' }
+            ],
+            '운동': [
+                { id: 'gCYcHz2k5x0', title: 'Calvin Harris - Summer' },
+                { id: 'fJ9rUzIMcZQ', title: "Queen – Don't Stop Me Now" },
+                { id: 'JRfuAukYTKg', title: 'Calvin Harris - Feel So Close' }
+            ],
+            '기분전환': [
+                { id: 'OPf0YbXqDm0', title: 'Mark Ronson - Uptown Funk' },
+                { id: '09R8_2nJtjg', title: 'Maroon 5 - Sugar' },
+                { id: '3AtDnEC4zak', title: "Charlie Puth - We Don't Talk Anymore" }
+            ],
+            '칠힙': [
+                { id: '5qap5aO4i9A', title: 'lofi hip hop radio' },
+                { id: 'DWcJFNfaw9c', title: 'Lofi Hip Hop Radio' },
+                { id: '7NOSDKb0HlU', title: 'Ambient Chillout' }
+            ]
+        };
+
+        function setStatus(text) {
+            if (!statusEl) return; if (!text) { statusEl.style.display = 'none'; statusEl.textContent = ''; return; }
+            statusEl.textContent = text; statusEl.style.display = 'inline-block';
+        }
+
+        function setMood(m) {
+            selectedMood = m;
+            document.querySelectorAll('.mood-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-mood') === m);
+            });
+            const mm = $('#memo-mood'); if (mm) { mm.textContent = `현재 기분: ${m}`; mm.style.display = 'inline-block'; }
+        }
+
+        function renderYouTubeCandidates(mood) {
+            const arr = (YT_BY_MOOD[mood] || []).slice(0, 2); // only 2 recommendations
+            ytThumbs.innerHTML = '';
+            ytCard.style.display = arr.length ? 'block' : 'none';
+            // auto-play first candidate muted
+            if (arr.length) {
+                const first = arr[0];
+                ytLink.href = `https://youtu.be/${first.id}`;
+                // set src on next frame to reduce autoplay race conditions
+                requestAnimationFrame(() => {
+                    ytFrame.src = `https://www.youtube.com/embed/${first.id}?autoplay=1&mute=1&playsinline=1&rel=0`;
+                });
+            } else {
+                ytFrame.src = '';
+            }
+            // build two thumbnails max
+            ytThumbs.classList.remove('two-col');
+            arr.forEach(v => {
+                const d = document.createElement('div'); d.className = 'yt-thumb';
+                d.innerHTML = `<img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt="${v.title}"><div class="cap">${v.title}</div>`;
+                d.addEventListener('click', () => { ytFrame.src = `https://www.youtube.com/embed/${v.id}?autoplay=1&mute=1&playsinline=1&rel=0`; ytLink.href = `https://youtu.be/${v.id}`; });
+                ytThumbs.appendChild(d);
+            });
+        }
+
+        function recommendForMood(mood) {
+            setStatus('플레이리스트 구성 중…');
+            const pid = SPOTIFY_PLAYLIST_BY_MOOD[mood];
+            gridEl.innerHTML = '';
+            if (pid) {
+                const wrap = document.createElement('div'); wrap.className = 'sp-embed';
+                wrap.innerHTML = `<iframe src="https://open.spotify.com/embed/playlist/${pid}" loading="lazy" allow="autoplay; encrypted-media"></iframe>`;
+                gridEl.appendChild(wrap);
+                resultEl.style.display = 'block';
+            } else { resultEl.style.display = 'none'; }
+            // show both panes together
+            mediaRow.style.display = 'grid';
+            renderYouTubeCandidates(mood);
+            // render art with fallback chain
+            loadArt(mood);
+            setStatus('완료'); setTimeout(() => setStatus(''), 800);
+        }
+
+        moodBarEl.addEventListener('click', (e) => {
+            const b = e.target.closest('.mood-btn'); if (!b) return; const m = b.getAttribute('data-mood'); setMood(m); recommendForMood(m);
+        });
+
+        // Calendar + memo
+        const calGrid = $('#cal-grid'); const calTitle = $('#cal-title'); const memoDate = $('#memo-date'); const memoText = $('#memo-text');
+        const memoSave = $('#memo-save'); const memoClear = $('#memo-clear');
+        const codeCard = $('#code'); const codeText = $('#code-text'); const codeRun = $('#code-run'); const codeClear = $('#code-clear'); const codeOut = $('#code-out');
+        let calYear, calMonth; let selectedDateISO = '';
+        let anchorDate = new Date();
+
+        function getMemoMap() { return JSON.parse(localStorage.getItem('mood_diary_memos') || '{}'); }
+        function setMemo(dateISO, memo) { const map = getMemoMap(); if (memo) map[dateISO] = memo; else delete map[dateISO]; localStorage.setItem('mood_diary_memos', JSON.stringify(map)); }
+        function getMemo(dateISO) { const map = getMemoMap(); const v = map[dateISO]; if (!v) return { text: '', mood: '' }; if (typeof v === 'string') return { text: v, mood: '' }; return { text: v.text || '', mood: v.mood || '' }; }
+        function ymdISO(y, m, d) { const mm = String(m + 1).padStart(2, '0'); const dd = String(d).padStart(2, '0'); return `${y}-${mm}-${dd}`; }
+
+        function renderCalendar() {
+            calGrid.innerHTML = '';
+            calTitle.textContent = '이번 주';
+            const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+            weekdays.forEach(w => { const h = document.createElement('div'); h.textContent = w; h.className = 'pill'; calGrid.appendChild(h); });
+            const startOfWeek = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate() - anchorDate.getDay()); // Sunday
+            const memoMap = getMemoMap();
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate() + i);
+                const c = document.createElement('div'); c.className = 'cal-cell';
+                const p = document.createElement('div'); p.className = 'cal-day'; p.textContent = d.getDate(); c.appendChild(p);
+                const iso = ymdISO(d.getFullYear(), d.getMonth(), d.getDate());
+                if (memoMap[iso]) {
+                    const dot = document.createElement('div'); dot.className = 'cal-has'; c.appendChild(dot);
+                    const val = getMemo(iso); c.title = val.text || '';
+                    const meta = MOOD_META[val.mood]; if (meta) { p.textContent = `${d.getDate()} ${meta.emoji}`; c.style.borderColor = meta.color + '80'; }
+                    const snip = document.createElement('div'); snip.className = 'cal-snippet'; snip.textContent = (val.text || '').split('\n')[0].slice(0, 18); c.appendChild(snip);
+                }
+                c.addEventListener('click', () => {
+                    selectedDateISO = iso; memoDate.textContent = iso; const cur = getMemo(iso); memoText.value = cur.text || ''; if (cur.mood) { setMood(cur.mood); }
+                    const mlabel = selectedMood;
+                    codeText.value = `// ${iso} - ${mlabel}\nconst date = '${iso}';\nconst mood = '${mlabel}';\nconst tip = ['심호흡 5회', '산책 10분', '물 한 잔', '스트레칭 3분'][Math.floor(Math.random() * 4)];\nconsole.log(\`오늘(${'${'}date}) 기분: ${'${'}mood}\`);\nconsole.log(\`추천 액션: ${'${'}tip}\`);`;
+                    codeOut.textContent = ''; codeCard.style.display = 'block';
+                });
+                calGrid.appendChild(c);
+            }
+        }
+
+        // week navigation
+        $('#prev-week').addEventListener('click', () => { anchorDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate() - 7); renderCalendar(); });
+        $('#next-week').addEventListener('click', () => { anchorDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate() + 7); renderCalendar(); });
+        // month navigation removed
+        memoSave.addEventListener('click', () => { if (!selectedDateISO) { alert('날짜를 먼저 선택하세요'); return; } setMemo(selectedDateISO, { text: memoText.value, mood: selectedMood }); renderCalendar(); });
+        memoClear.addEventListener('click', () => { if (!selectedDateISO) { alert('날짜를 먼저 선택하세요'); return; } setMemo(selectedDateISO, null); memoText.value = ''; renderCalendar(); });
+
+        // Export
+        function download(filename, content, type = 'text/plain') { const blob = new Blob([content], { type }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); URL.revokeObjectURL(a.href); }
+        $('#export-json').addEventListener('click', () => { const data = getMemoMap(); download('mood_diary.json', JSON.stringify(data, null, 2), 'application/json'); });
+        $('#export-csv').addEventListener('click', () => { const map = getMemoMap(); const rows = [["date", "mood", "text"]]; Object.keys(map).sort().forEach(k => { const v = getMemo(k); rows.push([k, v.mood || '', (v.text || '').replaceAll('\n', ' ')]); }); const csv = rows.map(r => r.map(x => '"' + x.replaceAll('"', '""') + '"').join(',')).join('\n'); download('mood_diary.csv', csv, 'text/csv'); });
+
+        // Initial
+        anchorDate = new Date();
+        const now = new Date(); setMood('행복'); renderCalendar();
+
+        // Code run handlers
+        function runUserCode() {
+            codeOut.textContent = '';
+            const original = console.log;
+            try {
+                console.log = (...args) => { codeOut.textContent += args.join(' ') + '\n'; };
+                new Function(codeText.value)();
+            } catch (err) { codeOut.textContent += '에러: ' + err.message; }
+            finally { console.log = original; }
+        }
+        codeRun.addEventListener('click', runUserCode);
+        codeClear.addEventListener('click', () => { codeText.value = ''; codeOut.textContent = ''; });
+    </script>
+</body>
+</html>
 </html>
